@@ -67,7 +67,7 @@ public class JemiRecipesGui implements IRecipesGui {
 		return Optional.empty();
 	}
 
-	@Override
+	//@Override
 	public Optional<Screen> getParentScreen() {
 		return Optional.empty();
 	}

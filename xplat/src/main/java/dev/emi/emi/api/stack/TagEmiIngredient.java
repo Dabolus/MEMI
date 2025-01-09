@@ -17,6 +17,7 @@ import dev.emi.emi.mixin.accessor.ItemRendererAccessor;
 import dev.emi.emi.platform.EmiAgnos;
 import dev.emi.emi.registry.EmiTags;
 import dev.emi.emi.runtime.EmiDrawContext;
+import dev.emi.emi.screen.tooltip.EmiTextTooltipWrapper;
 import dev.emi.emi.screen.tooltip.RemainderTooltipComponent;
 import dev.emi.emi.screen.tooltip.TagTooltipComponent;
 import net.minecraft.client.MinecraftClient;
@@ -158,7 +159,7 @@ public class TagEmiIngredient implements EmiIngredient {
 	@Override
 	public List<TooltipComponent> getTooltip() {
 		List<TooltipComponent> list = Lists.newArrayList();
-		list.add(TooltipComponent.of(EmiPort.ordered(EmiTags.getTagName(key))));
+		list.add(new EmiTextTooltipWrapper(this, EmiPort.ordered(EmiTags.getTagName(key))));
 		if (EmiUtil.showAdvancedTooltips()) {
 			list.add(TooltipComponent.of(EmiPort.ordered(EmiPort.literal("#" + id, Formatting.DARK_GRAY))));
 		}
