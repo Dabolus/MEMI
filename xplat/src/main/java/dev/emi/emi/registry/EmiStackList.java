@@ -73,8 +73,7 @@ public class EmiStackList {
 				EmiStack stack = EmiStack.of(item);
 				namespaceGroups.computeIfAbsent(stack.getId().getNamespace(), (k) -> new IndexGroup()).stacks.add(stack);
 			} catch (Exception e) {
-				EmiLog.error("Item " + itemName + " threw while EMI was attempting to construct the index, items may be missing.");
-				EmiLog.error(e);
+				EmiLog.error("Item " + itemName + " threw while EMI was attempting to construct the index, items may be missing.", e);
 			}
 		}
 		if (EmiConfig.indexSource != IndexSource.REGISTERED) {
@@ -90,8 +89,7 @@ public class EmiStackList {
 						group.updateEntries(context);
 						map.put(group, group.getSearchTabStacks());
 					} catch(Exception e) {
-						EmiLog.error("Creative item group " + groupName + " threw while EMI was attempting to construct the index, items may be missing.");
-						EmiLog.error(e);
+						EmiLog.error("Creative item group " + groupName + " threw while EMI was attempting to construct the index, items may be missing.", e);
 					}
 				};
 				List<ItemGroup> itemGroups = ItemGroups.getGroups();
@@ -127,8 +125,7 @@ public class EmiStackList {
 					}
 					groups.add(ig);
 				} catch (Exception e) {
-					EmiLog.error("Creative item group " + groupName + " threw while EMI was attempting to construct the index, items may be missing.");
-					EmiLog.error(e);
+					EmiLog.error("Creative item group " + groupName + " threw while EMI was attempting to construct the index, items may be missing.", e);
 				}
 			}
 		}
@@ -143,8 +140,7 @@ public class EmiStackList {
 					fluidGroup.stacks.add(fs);
 				}
 			} catch (Exception e) {
-				EmiLog.error("Fluid  " + fluidName + " threw while EMI was attempting to construct the index, stack may be missing.");
-				EmiLog.error(e);
+				EmiLog.error("Fluid  " + fluidName + " threw while EMI was attempting to construct the index, stack may be missing.", e);
 			}
 		}
 		groups.add(fluidGroup);
@@ -201,8 +197,7 @@ public class EmiStackList {
 				}
 				return false;
 			} catch (Throwable t) {
-				EmiLog.error("Stack threw error while baking");
-				t.printStackTrace();
+				EmiLog.error("Stack threw error while baking", t);
 				return true;
 			}
 		});
@@ -258,8 +253,7 @@ public class EmiStackList {
 				EmiLog.warn("Hiding stack " + name + " with id " + id + " from index due to returning dangerous values");
 				return false;
 			} catch (Throwable t) {
-				EmiLog.warn("Hiding stack " + name + " with id " + id + " from index due to throwing errors");
-				t.printStackTrace();
+				EmiLog.error("Hiding stack " + name + " with id " + id + " from index due to throwing errors", t);
 				return false;
 			}
 		}).toList();

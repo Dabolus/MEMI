@@ -850,8 +850,7 @@ public class EmiScreenManager {
 					}
 				}
 			} catch (Throwable t) {
-				EmiLog.error("Recipe handler is throwing in renderSlotOverlays:");
-				EmiLog.error(t);
+				EmiLog.error("Recipe handler is throwing in renderSlotOverlays:", t);
 			}
 		}
 		if (base.screen() instanceof HandledScreen<?> hs && hs instanceof HandledScreenAccessor hsa) {

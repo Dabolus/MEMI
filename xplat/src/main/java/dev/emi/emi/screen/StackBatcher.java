@@ -135,8 +135,7 @@ public class StackBatcher {
 				batchable.renderForBatch(batchable.isSideLit() ? imm : unlitFacade, draw, x-this.x, y+this.y, z, delta);
 			} catch (Throwable t) {
 				if (EmiConfig.devMode) {
-					EmiLog.error("Batchable threw exception during batched rendering. See log for info");
-					t.printStackTrace();
+					EmiLog.error("Batchable threw exception during batched rendering. See log for info", t);
 				}
 				batchable.setUnbatchable();
 			}
@@ -167,8 +166,7 @@ public class StackBatcher {
 					}
 				} catch (Throwable t) {
 					if (EmiConfig.devMode) {
-						EmiLog.error("Stack threw exception during batched rendering. See log for info");
-						t.printStackTrace();
+						EmiLog.error("Stack threw exception during batched rendering. See log for info", t);
 					}
 					b.setUnbatchable();
 				}

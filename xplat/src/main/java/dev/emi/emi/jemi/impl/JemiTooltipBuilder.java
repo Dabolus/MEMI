@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import dev.emi.emi.runtime.EmiLog;
 import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
@@ -37,7 +38,7 @@ public class JemiTooltipBuilder implements ITooltipBuilder {
 		try {
 			tooltip.add(TooltipComponent.of(data));
 		} catch (Exception e) {
-			e.printStackTrace();
+			EmiLog.error("Error converting TooltipComponent", e);
 		}
 	}
 
