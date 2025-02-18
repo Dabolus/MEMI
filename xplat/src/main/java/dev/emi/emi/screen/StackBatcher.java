@@ -232,26 +232,35 @@ public class StackBatcher {
 		private List<StackBatcher> unclaimed = Lists.newArrayList();
 
 		public StackBatcher claim() {
-			StackBatcher batcher;
-			if (unclaimed.isEmpty()) {
-				batcher = new StackBatcher();
-			} else {
-				batcher = unclaimed.remove(unclaimed.size() - 1);
+			synchronized (this) {
+				StackBatcher batcher;
+				if (unclaimed.isEmpty()) {
+					batcher = new StackBatcher();
+				} else {
+					batcher = unclaimed.remove(unclaimed.size() - 1);
+				}
+				if (batcher == null) {
+					batcher = new StackBatcher();
+				}
+				claimed.add(batcher);
+				return batcher;
 			}
-			claimed.add(batcher);
-			return batcher;
 		}
 
 		public void unclaim(StackBatcher batcher) {
-			claimed.remove(batcher);
-			unclaimed.add(batcher);
+			synchronized (this) {
+				claimed.remove(batcher);
+				unclaimed.add(batcher);
+			}
 		}
 
 		public void unclaimAll() {
-			for (StackBatcher batcher : claimed) {
-				unclaimed.add(batcher);
+			synchronized (this) {
+				for (StackBatcher batcher : claimed) {
+					unclaimed.add(batcher);
+				}
+				claimed.clear();
 			}
-			claimed.clear();
 		}
 	}
 

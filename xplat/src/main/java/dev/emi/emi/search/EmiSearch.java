@@ -112,6 +112,15 @@ public class EmiSearch {
 				}
 			}
 		}
+		for (EmiAlias.Baked alias : EmiStackList.registryAliases) {
+			for (Text text : alias.text()) {
+				for (EmiIngredient ing : alias.stacks()) {
+					for (EmiStack stack : ing.getEmiStacks()) {
+						aliases.add(stack.copy().comparison(EmiPort.compareStrict()), text.getString().toLowerCase());
+					}
+				}
+			}
+		}
 		EmiConfig.appendItemModId = old;
 		names.build();
 		tooltips.build();

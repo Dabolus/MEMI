@@ -19,6 +19,7 @@ import dev.emi.emi.api.stack.EmiRegistryAdapter;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.config.EmiConfig;
 import dev.emi.emi.config.IndexSource;
+import dev.emi.emi.data.EmiAlias;
 import dev.emi.emi.data.EmiData;
 import dev.emi.emi.data.IndexStackData;
 import dev.emi.emi.runtime.EmiHidden;
@@ -48,6 +49,7 @@ public class EmiStackList {
 	private static final TagKey<Item> ITEM_HIDDEN = TagKey.of(EmiPort.getItemRegistry().getKey(), EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
 	private static final TagKey<Block> BLOCK_HIDDEN = TagKey.of(EmiPort.getBlockRegistry().getKey(), EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
 	private static final TagKey<Fluid> FLUID_HIDDEN = TagKey.of(EmiPort.getFluidRegistry().getKey(), EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
+	public static List<EmiAlias.Baked> registryAliases = Lists.newArrayList();
 	public static List<Predicate<EmiStack>> invalidators = Lists.newArrayList();
 	public static List<EmiStack> stacks = List.of();
 	public static List<EmiStack> filteredStacks = List.of();
@@ -56,6 +58,7 @@ public class EmiStackList {
 
 	public static void clear() {
 		invalidators.clear();
+		registryAliases.clear();
 		stacks = List.of();
 		strictIndices.clear();
 		keyIndices.clear();

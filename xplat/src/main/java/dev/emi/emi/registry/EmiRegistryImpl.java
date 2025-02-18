@@ -1,6 +1,7 @@
 package dev.emi.emi.registry;
 
 import java.util.ListIterator;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -19,6 +20,7 @@ import dev.emi.emi.api.stack.Comparison;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.stack.serializer.EmiIngredientSerializer;
+import dev.emi.emi.data.EmiAlias;
 import dev.emi.emi.runtime.EmiHidden;
 import dev.emi.emi.runtime.EmiReloadLog;
 import net.minecraft.client.MinecraftClient;
@@ -26,6 +28,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.recipe.RecipeManager;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.text.Text;
 
 public class EmiRegistryImpl implements EmiRegistry {
 	private static final MinecraftClient client = MinecraftClient.getInstance();
@@ -137,6 +140,11 @@ public class EmiRegistryImpl implements EmiRegistry {
 	@Override
 	public void setDefaultComparison(Object key, Function<Comparison, Comparison> comparison) {
 		EmiComparisonDefaults.comparisons.put(key, comparison.apply(EmiComparisonDefaults.get(key)));
+	}
+
+	@Override
+	public void addAlias(EmiIngredient stack, Text text) {
+		EmiStackList.registryAliases.add(new EmiAlias.Baked(List.of(stack), List.of(text)));
 	}
 
 	@Override
