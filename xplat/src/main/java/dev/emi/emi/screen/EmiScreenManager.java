@@ -668,7 +668,7 @@ public class EmiScreenManager {
 		renderSlotOverlays(context, mouseX, mouseY, delta, base);
 		EmiProfiler.pop();
 
-		RenderSystem.disableDepthTest();
+		context.disableDepthTest();
 	}
 
 	public static void drawForeground(EmiDrawContext context, int mouseX, int mouseY, float delta) {
@@ -1534,7 +1534,7 @@ public class EmiScreenManager {
 					}
 				}
 				if (isVisible()) {
-					RenderSystem.enableDepthTest();
+					context.enableDepthTest();
 					context.resetColor();
 					int headerOffset = header ? 18 : 0;
 					if (theme == SidebarTheme.VANILLA) {
@@ -1547,13 +1547,13 @@ public class EmiScreenManager {
 					} else if (theme == SidebarTheme.MODERN) {
 						int offset = 2;
 						for (ScreenSpace space : getSpaces()) {
-							RenderSystem.enableBlend();
+							context.enableBlend();
 							context.drawTexture(EmiRenderHelper.GRID, space.tx, space.ty, space.tw * ENTRY_SIZE,
 								space.th * ENTRY_SIZE, 0, 0, space.tw, space.th, 2, offset);
 							if (space.th % 2 == 1) {
 								offset *= -1;
 							}
-							RenderSystem.disableBlend();
+							context.disableBlend();
 						}
 					}
 					for (ScreenSpace space : getSpaces()) {
@@ -1756,7 +1756,7 @@ public class EmiScreenManager {
 
 		public void render(EmiDrawContext context, int mouseX, int mouseY, float delta, int startIndex) {
 			if (this.pageSize > 0) {
-				RenderSystem.enableDepthTest();
+				context.enableDepthTest();
 				EmiPort.setPositionTexShader();
 				context.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 				int hx = -1, hy = -1;
@@ -1781,10 +1781,10 @@ public class EmiScreenManager {
 						batcher.render(stack, context.raw(), cx + 1, cy + 1, delta);
 						if (getType() == SidebarType.INDEX) {
 							if (EmiConfig.editMode && EmiHidden.isHidden(stack)) {
-								RenderSystem.enableDepthTest();
+								context.enableDepthTest();
 								context.fill(cx, cy, ENTRY_SIZE, ENTRY_SIZE, 0x33ff0000);
 							} else if (EmiConfig.highlightDefaulted && BoM.getRecipe(stack) != null) {
-								RenderSystem.enableDepthTest();
+								context.enableDepthTest();
 								context.fill(cx, cy, ENTRY_SIZE, ENTRY_SIZE, 0x3300ff00);
 							}
 						}
