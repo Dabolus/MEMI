@@ -1,7 +1,7 @@
 package dev.emi.emi.screen;
 
 import java.util.List;
-
+import net.minecraft.resources.Identifier;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import dev.emi.emi.EmiPort;
@@ -10,7 +10,6 @@ import dev.emi.emi.config.FluidUnit;
 import dev.emi.emi.runtime.EmiDrawContext;
 import it.unimi.dsi.fastutil.chars.Char2ObjectMap;
 import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
-import net.minecraft.util.Identifier;
 
 public class MicroTextRenderer {
 	private static final Identifier TEXTURE = EmiPort.id("emi", "textures/gui/microfont.png");
@@ -95,22 +94,15 @@ public class MicroTextRenderer {
 		int height = 7;
 		int x = right - width;
 		int y = bottom - height;
-		float a = (((color & 0xFF000000) >> 24) & 0xFF) / 255f;
-		float r = (((color & 0x00FF0000) >> 16) & 0xFF) / 255f;
-		float g = (((color & 0x0000FF00) >>  8) & 0xFF) / 255f;
-		float b = (((color & 0x000000FF) >>  0) & 0xFF) / 255f;
 		context.push();
-		context.matrices().translate(0, 0, 300);
-		context.disableBlend();
+		context.matrices().translate(0, 0);
 		for (int i = 0; i < string.length(); i++) {
 			MicroChar c = MICRO_CHARS.get(string.charAt(i));
 			if (c == null) {
 				x += 1;
 				continue;
 			}
-			context.setColor(r, g, b, a);
 			context.drawTexture(TEXTURE, x, y, c.u, c.v, c.width, 7);
-			context.resetColor();
 			context.drawTexture(TEXTURE, x, y, c.u, c.v + 7, c.width, 7);
 			x += c.width - 1;
 		}

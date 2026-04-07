@@ -14,13 +14,12 @@ import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.jemi.JemiUtil;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotRichTooltipCallback;
-import mezz.jei.api.gui.ingredient.IRecipeSlotTooltipCallback;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 @SuppressWarnings("unchecked")
 public class JemiRecipeSlot implements IRecipeSlotView {
@@ -28,7 +27,6 @@ public class JemiRecipeSlot implements IRecipeSlotView {
 	public final boolean large;
 	public final int x, y;
 	public final Optional<String> name;
-	public final IRecipeSlotTooltipCallback tooltipCallback;
 	public final IRecipeSlotRichTooltipCallback richTooltipCallback;
 	public final OffsetDrawable background, overlay;
 	public final Map<IIngredientType<?>, IngredientRenderer<?>> renderers;
@@ -43,7 +41,6 @@ public class JemiRecipeSlot implements IRecipeSlotView {
 		this.x = builder.x;
 		this.y = builder.y;
 		this.name = builder.name;
-		this.tooltipCallback = builder.tooltipCallback;
 		this.richTooltipCallback = builder.richTooltipCallback;
 		this.background = builder.background;
 		this.overlay = builder.overlay;
@@ -58,7 +55,6 @@ public class JemiRecipeSlot implements IRecipeSlotView {
 		this.x = 0;
 		this.y = 0;
 		this.name = Optional.empty();
-		this.tooltipCallback = null;
 		this.richTooltipCallback = null;
 		this.background = null;
 		this.overlay = null;
@@ -112,7 +108,7 @@ public class JemiRecipeSlot implements IRecipeSlotView {
 	}
 
 	@Override
-	public void drawHighlight(DrawContext raw, int color) {
+	public void drawHighlight(GuiGraphicsExtractor raw, int color) {
 		this.highlight = color;
 	}
 

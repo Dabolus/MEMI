@@ -25,7 +25,58 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.EnchantmentTags;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.inventory.BlastFurnaceMenu;
+import net.minecraft.world.inventory.FurnaceMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.SmokerMenu;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.HoneycombItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.component.DyedItemColor;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.crafting.BannerDuplicateRecipe;
+import net.minecraft.world.item.crafting.BlastingRecipe;
+import net.minecraft.world.item.crafting.BookCloningRecipe;
+import net.minecraft.world.item.crafting.CampfireCookingRecipe;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.RepairItemRecipe;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.minecraft.world.item.crafting.SmithingRecipe;
+import net.minecraft.world.item.crafting.SmokingRecipe;
+import net.minecraft.world.item.crafting.StonecutterRecipe;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ComposterBlock;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.TallFlowerBlock;
+import net.minecraft.world.level.block.WeatheringCopper;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.datafixers.util.Pair;
@@ -78,19 +129,11 @@ import dev.emi.emi.recipe.EmiStonecuttingRecipe;
 import dev.emi.emi.recipe.EmiTagRecipe;
 import dev.emi.emi.recipe.special.EmiAnvilEnchantRecipe;
 import dev.emi.emi.recipe.special.EmiAnvilRepairItemRecipe;
-import dev.emi.emi.recipe.special.EmiArmorDyeRecipe;
 import dev.emi.emi.recipe.special.EmiBannerDuplicateRecipe;
-import dev.emi.emi.recipe.special.EmiBannerShieldRecipe;
-import dev.emi.emi.recipe.special.EmiBookCloningRecipe;
-import dev.emi.emi.recipe.special.EmiFireworkRocketRecipe;
-import dev.emi.emi.recipe.special.EmiFireworkStarFadeRecipe;
-import dev.emi.emi.recipe.special.EmiFireworkStarRecipe;
 import dev.emi.emi.recipe.special.EmiGrindstoneDisenchantingBookRecipe;
 import dev.emi.emi.recipe.special.EmiGrindstoneDisenchantingRecipe;
-import dev.emi.emi.recipe.special.EmiMapCloningRecipe;
 import dev.emi.emi.recipe.special.EmiRepairItemRecipe;
 import dev.emi.emi.recipe.special.EmiSmithingTrimRecipe;
-import dev.emi.emi.recipe.special.EmiSuspiciousStewRecipe;
 import dev.emi.emi.registry.EmiTags;
 import dev.emi.emi.runtime.EmiDrawContext;
 import dev.emi.emi.runtime.EmiLog;
@@ -100,73 +143,6 @@ import dev.emi.emi.stack.serializer.FluidEmiStackSerializer;
 import dev.emi.emi.stack.serializer.ItemEmiStackSerializer;
 import dev.emi.emi.stack.serializer.ListEmiIngredientSerializer;
 import dev.emi.emi.stack.serializer.TagEmiIngredientSerializer;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ComposterBlock;
-import net.minecraft.block.Oxidizable;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.block.TallFlowerBlock;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.DyedColorComponent;
-import net.minecraft.component.type.PotionContentsComponent;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.fluid.FlowableFluid;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.DyeItem;
-import net.minecraft.item.HoneycombItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.Items;
-import net.minecraft.item.ToolItem;
-import net.minecraft.potion.Potions;
-import net.minecraft.recipe.ArmorDyeRecipe;
-import net.minecraft.recipe.BannerDuplicateRecipe;
-import net.minecraft.recipe.BlastingRecipe;
-import net.minecraft.recipe.BookCloningRecipe;
-import net.minecraft.recipe.CampfireCookingRecipe;
-import net.minecraft.recipe.CraftingRecipe;
-import net.minecraft.recipe.FireworkRocketRecipe;
-import net.minecraft.recipe.FireworkStarFadeRecipe;
-import net.minecraft.recipe.FireworkStarRecipe;
-import net.minecraft.recipe.MapCloningRecipe;
-import net.minecraft.recipe.MapExtendingRecipe;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.RepairItemRecipe;
-import net.minecraft.recipe.ShapedRecipe;
-import net.minecraft.recipe.ShapelessRecipe;
-import net.minecraft.recipe.ShieldDecorationRecipe;
-import net.minecraft.recipe.ShulkerBoxColoringRecipe;
-import net.minecraft.recipe.SmeltingRecipe;
-import net.minecraft.recipe.SmithingRecipe;
-import net.minecraft.recipe.SmokingRecipe;
-import net.minecraft.recipe.SpecialCraftingRecipe;
-import net.minecraft.recipe.StonecuttingRecipe;
-import net.minecraft.recipe.SuspiciousStewRecipe;
-import net.minecraft.recipe.TippedArrowRecipe;
-import net.minecraft.recipe.input.RecipeInput;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.EnchantmentTags;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.screen.BlastFurnaceScreenHandler;
-import net.minecraft.screen.FurnaceScreenHandler;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.screen.SmokerScreenHandler;
-import net.minecraft.util.DyeColor;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 
 @EmiEntrypoint
 public class VanillaPlugin implements EmiPlugin {
@@ -259,13 +235,13 @@ public class VanillaPlugin implements EmiPlugin {
 		registry.addWorkstation(COMPOSTING, EmiStack.of(Items.COMPOSTER));
 
 		registry.addRecipeHandler(null, new InventoryRecipeHandler());
-		registry.addRecipeHandler(ScreenHandlerType.CRAFTING, new CraftingRecipeHandler());
-		registry.addRecipeHandler(ScreenHandlerType.FURNACE, new CookingRecipeHandler<FurnaceScreenHandler>(SMELTING));
-		registry.addRecipeHandler(ScreenHandlerType.BLAST_FURNACE, new CookingRecipeHandler<BlastFurnaceScreenHandler>(BLASTING));
-		registry.addRecipeHandler(ScreenHandlerType.SMOKER, new CookingRecipeHandler<SmokerScreenHandler>(SMOKING));
-		registry.addRecipeHandler(ScreenHandlerType.STONECUTTER, new StonecuttingRecipeHandler());
+		registry.addRecipeHandler(MenuType.CRAFTING, new CraftingRecipeHandler());
+		registry.addRecipeHandler(MenuType.FURNACE, new CookingRecipeHandler<FurnaceMenu>(SMELTING));
+		registry.addRecipeHandler(MenuType.BLAST_FURNACE, new CookingRecipeHandler<BlastFurnaceMenu>(BLASTING));
+		registry.addRecipeHandler(MenuType.SMOKER, new CookingRecipeHandler<SmokerMenu>(SMOKING));
+		registry.addRecipeHandler(MenuType.STONECUTTER, new StonecuttingRecipeHandler());
 
-		registry.addExclusionArea(CreativeInventoryScreen.class, (screen, consumer) -> {
+		registry.addExclusionArea(CreativeModeInventoryScreen.class, (screen, consumer) -> {
 			int left = ((HandledScreenAccessor) screen).getX();
 			int top = ((HandledScreenAccessor) screen).getY();
 			int width = ((HandledScreenAccessor) screen).getBackgroundWidth();
@@ -275,9 +251,9 @@ public class VanillaPlugin implements EmiPlugin {
 		});
 
 		registry.addGenericExclusionArea((screen, consumer) -> {
-			if (EmiConfig.effectLocation != EffectLocation.HIDDEN && screen instanceof AbstractInventoryScreen<?> inv) {
-				MinecraftClient client = MinecraftClient.getInstance();
-				Collection<StatusEffectInstance> collection = client.player.getStatusEffects();
+			if (EmiConfig.effectLocation != EffectLocation.HIDDEN && screen instanceof AbstractContainerScreen<?> inv) {
+				Minecraft client = Minecraft.getInstance();
+				Collection<MobEffectInstance> collection = client.player.getActiveEffects();
 				if (!collection.isEmpty()) {
 					int k = 33;
 					if (collection.size() > 5) {
@@ -292,7 +268,7 @@ public class VanillaPlugin implements EmiPlugin {
 						if (EmiConfig.effectLocation == EffectLocation.TOP) {
 							int size = collection.size();
 							top = ((HandledScreenAccessor) inv).getY() - 34;
-							if (((Object) screen) instanceof CreativeInventoryScreen) {
+							if (((Object) screen) instanceof CreativeModeInventoryScreen) {
 								top -= 28;
 								if (EmiAgnos.isForge()) {
 									top -= 22;
@@ -325,7 +301,7 @@ public class VanillaPlugin implements EmiPlugin {
 			}
 		});
 
-		Comparison potionComparison = Comparison.compareData(stack -> stack.get(DataComponentTypes.POTION_CONTENTS));
+		Comparison potionComparison = Comparison.compareData(stack -> stack.get(DataComponents.POTION_CONTENTS));
 
 		registry.setDefaultComparison(Items.POTION, potionComparison);
 		registry.setDefaultComparison(Items.SPLASH_POTION, potionComparison);
@@ -338,100 +314,33 @@ public class VanillaPlugin implements EmiPlugin {
 			EmiPort.getDisabledItems()
 		).collect(Collectors.toSet());
 
-		List<Item> dyeableItems = EmiTagKey.of(ItemTags.DYEABLE).getList();
+		List<Item> dyeableItems = EmiTagKey.of(ItemTags.CAULDRON_CAN_REMOVE_DYE).getList();
 
+		boolean handledBannerDuplicate = false;
+		boolean handledRepairItem = false;
 		for (CraftingRecipe recipe : getRecipes(registry, RecipeType.CRAFTING)) {
 			Identifier id = EmiPort.getId(recipe);
-			if (recipe instanceof MapExtendingRecipe map) {
-				EmiStack paper = EmiStack.of(Items.PAPER);
-				addRecipeSafe(registry, () -> new EmiCraftingRecipe(List.of(
-						paper, paper, paper, paper,
-						EmiStack.of(Items.FILLED_MAP),
-						paper, paper, paper, paper
-				), 
-						EmiStack.of(Items.FILLED_MAP),
-						id, false), recipe);
-			} else if (recipe instanceof ShapedRecipe shaped && recipe.fits(3, 3)) {
+			if (recipe instanceof ShapedRecipe shaped) {
 				addRecipeSafe(registry, () -> new EmiShapedRecipe(shaped), recipe);
-			} else if (recipe instanceof ShapelessRecipe shapeless && recipe.fits(3, 3)) {
+			} else if (recipe instanceof ShapelessRecipe shapeless) {
 				addRecipeSafe(registry, () -> new EmiShapelessRecipe(shapeless), recipe);
-			} else if (recipe instanceof ArmorDyeRecipe dye) {
-				for (Item i : dyeableItems) {
-					if (!hiddenItems.contains(i)) {
-						addRecipeSafe(registry, () -> new EmiArmorDyeRecipe(i, synthetic("crafting/dying", EmiUtil.subId(i))), recipe);
-					}
-				}
-			} else if (recipe instanceof SuspiciousStewRecipe stew) {
-				addRecipeSafe(registry, () -> new EmiSuspiciousStewRecipe(id), recipe);
-			} else if (recipe instanceof ShulkerBoxColoringRecipe shulker) {
-				for (DyeColor dye : DyeColor.values()) {
-					DyeItem dyeItem = DyeItem.byColor(dye);
-					Identifier sid = synthetic("crafting/shulker_box_dying", EmiUtil.subId(dyeItem));
-					addRecipeSafe(registry, () -> new EmiCraftingRecipe(
-						List.of(EmiStack.of(Items.SHULKER_BOX), EmiStack.of(dyeItem)),
-						EmiStack.of(ShulkerBoxBlock.getItemStack(dye)), sid), recipe);
-				}
-			} else if (recipe instanceof ShieldDecorationRecipe shield) {
-				addRecipeSafe(registry, () -> new EmiBannerShieldRecipe(id), recipe);
-			} else if (recipe instanceof BookCloningRecipe book) {
-				addRecipeSafe(registry, () -> new EmiBookCloningRecipe(id), recipe);
-			} else if (recipe instanceof TippedArrowRecipe tipped) {
-				EmiPort.getPotionRegistry().streamEntries().forEach(entry -> {
-					EmiStack arrow = EmiStack.of(Items.ARROW);
-					addRecipeSafe(registry, () -> new EmiCraftingRecipe(List.of(
-							arrow, arrow, arrow, arrow,
-							EmiStack.of(EmiPort.setPotion(new ItemStack(Items.LINGERING_POTION), entry.value())),
-							arrow, arrow, arrow, arrow
-						),
-						EmiStack.of(EmiPort.setPotion(new ItemStack(Items.TIPPED_ARROW, 8), entry.value())),
-						synthetic("crafting/tipped_arrow", EmiUtil.subId(EmiPort.getPotionRegistry().getId(entry.value()))),
-						false), recipe);
-				});
-			} else if (recipe instanceof FireworkStarRecipe star) {
-				addRecipeSafe(registry, () -> new EmiFireworkStarRecipe(id), recipe);
-			} else if (recipe instanceof FireworkStarFadeRecipe star) {
-				addRecipeSafe(registry, () -> new EmiFireworkStarFadeRecipe(id), recipe);
-			} else if (recipe instanceof FireworkRocketRecipe rocket) {
-				addRecipeSafe(registry, () -> new EmiFireworkRocketRecipe(id), recipe);
-			} else if (recipe instanceof BannerDuplicateRecipe banner) {
+			} else if (!handledBannerDuplicate && recipe instanceof BannerDuplicateRecipe banner) {
+				handledBannerDuplicate = true;
 				for (Item i : EmiBannerDuplicateRecipe.BANNERS) {
 					if (!hiddenItems.contains(i)) {
 						addRecipeSafe(registry, () -> new EmiBannerDuplicateRecipe(i, synthetic("crafting/banner_copying", EmiUtil.subId(i))), recipe);
 					}
 				}
-			} else if (recipe instanceof RepairItemRecipe tool) {
+			} else if (!handledRepairItem && recipe instanceof RepairItemRecipe tool) {
+				handledRepairItem = true;
 				for (Item i : EmiRepairItemRecipe.TOOLS) {
 					if (!hiddenItems.contains(i)) {
 						addRecipeSafe(registry, () -> new EmiRepairItemRecipe(i, synthetic("crafting/repairing", EmiUtil.subId(i))), recipe);
 					}
 				}
-			} else if (recipe instanceof MapCloningRecipe map) {
-				addRecipeSafe(registry, () -> new EmiMapCloningRecipe(id), recipe);
-			} else if (!(recipe instanceof SpecialCraftingRecipe)) {
-				try {
-					if (!recipe.getIngredients().isEmpty() && !EmiPort.getOutput(recipe).isEmpty() && recipe.fits(3, 3)) {
-						boolean shapeless = recipe.fits(1, recipe.getIngredients().size()) && recipe.fits(recipe.getIngredients().size(), 1);
-						List<EmiIngredient> input;
-						if (shapeless) {
-							input = recipe.getIngredients().stream().map(EmiIngredient::of).toList();
-						} else {
-							int width = recipe.fits(2, 3) ? recipe.fits(1, 3) ? 1 : 2 : 3;
-							input = Lists.newArrayList();
-							for (int i = 0; i < recipe.getIngredients().size(); i++) {
-								input.add(EmiIngredient.of(recipe.getIngredients().get(i)));
-								if ((i + 1) % width == 0) {
-									for (int j = width; j < 3; j++) {
-										input.add(EmiStack.EMPTY);
-									}
-								}
-							}
-						}
-						EmiShapedRecipe.setRemainders(input, recipe);
-						addRecipeSafe(registry, () -> new EmiCraftingRecipe(input, EmiStack.of(EmiPort.getOutput(recipe)), id, shapeless));
-					}
-				} catch (Exception e) {
-					EmiReloadLog.warn("Exception when parsing vanilla crafting recipe " + id, e);
-				}
+			} else if (!(recipe instanceof CustomRecipe)) {
+				// TODO: Re-implement generic CraftingRecipe fallback for MC 26.1
+				// recipe.getIngredients() and recipe.canCraftInDimensions() were removed
 			}
 		}
 
@@ -449,16 +358,16 @@ public class VanillaPlugin implements EmiPlugin {
 		}
 		for (SmithingRecipe recipe : getRecipes(registry, RecipeType.SMITHING)) {
 			//addRecipeSafe(registry, () -> new EmiSmithingRecipe(recipe), recipe);
-			MinecraftClient client = MinecraftClient.getInstance();
+			Minecraft client = Minecraft.getInstance();
 			if (recipe instanceof SmithingTransformRecipeAccessor stra) {
-				addRecipeSafe(registry, () -> new EmiSmithingRecipe(EmiIngredient.of(stra.getTemplate()), EmiIngredient.of(stra.getBase()),
-					EmiIngredient.of(stra.getAddition()), EmiStack.of(EmiPort.getOutput(recipe)), EmiPort.getId(recipe)), recipe);
+				addRecipeSafe(registry, () -> new EmiSmithingRecipe(stra.getTemplate().map(EmiIngredient::of).orElse(EmiStack.EMPTY), EmiIngredient.of(stra.getBase()),
+					stra.getAddition().map(EmiIngredient::of).orElse(EmiStack.EMPTY), EmiStack.of(EmiPort.getOutput(recipe)), EmiPort.getId(recipe)), recipe);
 			} else if (recipe instanceof SmithingTrimRecipeAccessor stra) {
 				addRecipeSafe(registry, () -> new EmiSmithingTrimRecipe(EmiIngredient.of(stra.getTemplate()), EmiIngredient.of(stra.getBase()),
 					EmiIngredient.of(stra.getAddition()), EmiStack.of(EmiPort.getOutput(recipe)), recipe), recipe);
 			}
 		}
-		for (StonecuttingRecipe recipe : getRecipes(registry, RecipeType.STONECUTTING)) {
+		for (StonecutterRecipe recipe : getRecipes(registry, RecipeType.STONECUTTING)) {
 			addRecipeSafe(registry, () -> new EmiStonecuttingRecipe(recipe), recipe);
 		}
 
@@ -480,7 +389,7 @@ public class VanillaPlugin implements EmiPlugin {
 		List<Enchantment> universalEnchantments = Lists.newArrayList();
 		for (Enchantment enchantment : EmiPort.getEnchantmentRegistry().stream().toList()) {
 			try {
-				if (enchantment.isAcceptableItem(ItemStack.EMPTY)) {
+				if (enchantment.canEnchant(ItemStack.EMPTY)) {
 					universalEnchantments.add(enchantment);
 					continue;
 				}
@@ -493,19 +402,12 @@ public class VanillaPlugin implements EmiPlugin {
 				continue;
 			}
 			try {
-				if (i.getComponents().getOrDefault(DataComponentTypes.MAX_DAMAGE, 0) > 0) {
-					if (i instanceof ArmorItem ai && ai.getMaterial() != null && ai.getMaterial().value().repairIngredient().get() != null
-							&& !ai.getMaterial().value().repairIngredient().get().isEmpty()) {
-						Identifier id = synthetic("anvil/repairing/material", EmiUtil.subId(i) + "/" + EmiUtil.subId(ai.getMaterial().value().repairIngredient().get().getMatchingStacks()[0].getItem()));
-						addRecipeSafe(registry, () -> new EmiAnvilRecipe(EmiStack.of(i), EmiIngredient.of(ai.getMaterial().value().repairIngredient().get()), id));
-					} else if (i instanceof ToolItem ti && ti.getMaterial().getRepairIngredient() != null
-							&& !ti.getMaterial().getRepairIngredient().isEmpty()) {
-						Identifier id = synthetic("anvil/repairing/material", EmiUtil.subId(i) + "/" + EmiUtil.subId(ti.getMaterial().getRepairIngredient().getMatchingStacks()[0].getItem()));
-						addRecipeSafe(registry, () -> new EmiAnvilRecipe(EmiStack.of(i), EmiIngredient.of(ti.getMaterial().getRepairIngredient()), id));
-					}
+				if (i.components().getOrDefault(DataComponents.MAX_DAMAGE, 0) > 0) {
+					// TODO: Implement repair ingredient detection for MC 26.1
+					// ArmorItem and TieredItem no longer exist; repair uses DataComponents.REPAIRABLE
 				}
 				// TODO used to be isDamageable, the 20.1 impl of that method appears to just be maxDamage > 0 though
-				if (i.getComponents().getOrDefault(DataComponentTypes.MAX_DAMAGE, 0) > 0) {
+				if (i.components().getOrDefault(DataComponents.MAX_DAMAGE, 0) > 0) {
 					addRecipeSafe(registry, () -> new EmiAnvilRepairItemRecipe(i, synthetic("anvil/repairing/tool", EmiUtil.subId(i))));
 					addRecipeSafe(registry, () -> new EmiGrindstoneRecipe(i, synthetic("grindstone/repairing", EmiUtil.subId(i))));
 				}
@@ -513,16 +415,15 @@ public class VanillaPlugin implements EmiPlugin {
 				EmiLog.error("Exception thrown registering repair recipes", t);
 			}
 			try {
-				ItemStack defaultStack = i.getDefaultStack();
+				ItemStack defaultStack = i.getDefaultInstance();
 				int acceptableEnchantments = 0;
 				Consumer<Enchantment> consumer = e -> {
 					int max = e.getMaxLevel();
 					addRecipeSafe(registry, () -> new EmiAnvilEnchantRecipe(i, e, max,
-						synthetic("anvil/enchanting", EmiUtil.subId(i) + "/" + EmiUtil.subId(EmiPort.getEnchantmentRegistry().getId(e)) + "/" + max)));
+						synthetic("anvil/enchanting", EmiUtil.subId(i) + "/" + EmiUtil.subId(EmiPort.getEnchantmentRegistry().getKey(e)) + "/" + max)));
 				};
 				for (Enchantment e : targetedEnchantments) {
-					if (e.isAcceptableItem(defaultStack) && defaultStack.isEnchantable()
-							&& defaultStack.getItem().isEnchantable(defaultStack)
+					if (e.canEnchant(defaultStack) && defaultStack.isEnchantable()
 							&& EmiAgnos.isEnchantable(defaultStack, e)) {
 						consumer.accept(e);
 						acceptableEnchantments++;
@@ -530,7 +431,7 @@ public class VanillaPlugin implements EmiPlugin {
 				}
 				if (acceptableEnchantments > 0) {
 					for (Enchantment e : universalEnchantments) {
-						if (e.isAcceptableItem(defaultStack)) {
+						if (e.canEnchant(defaultStack)) {
 							consumer.accept(e);
 							acceptableEnchantments++;
 						}
@@ -551,13 +452,13 @@ public class VanillaPlugin implements EmiPlugin {
 			synthetic("anvil/repairing/material", EmiUtil.subId(Items.SHIELD) + "/" + EmiUtil.subId(Items.OAK_PLANKS))));
 
 		for (Enchantment e : EmiPort.getEnchantmentRegistry().stream().toList()) {
-			if (!EmiPort.getEnchantmentRegistry().getEntry(e).isIn(EnchantmentTags.CURSE)) {
+			if (!EmiPort.getEnchantmentRegistry().wrapAsHolder(e).is(EnchantmentTags.CURSE)) {
 				int max = Math.min(10, e.getMaxLevel());
 				int min = e.getMinLevel();
 				while (min <= max) {
 					int level = min;
 					addRecipeSafe(registry, () -> new EmiGrindstoneDisenchantingBookRecipe(e, level,
-						synthetic("grindstone/disenchanting/book", EmiUtil.subId(EmiPort.getEnchantmentRegistry().getId(e)) + "/" + level)));
+						synthetic("grindstone/disenchanting/book", EmiUtil.subId(EmiPort.getEnchantmentRegistry().getKey(e)) + "/" + level)));
 					min++;
 				}
 			}
@@ -591,11 +492,11 @@ public class VanillaPlugin implements EmiPlugin {
 			Identifier id = synthetic("world/stripping", EmiUtil.subId(entry.getKey()));
 			addRecipeSafe(registry, () -> basicWorld(EmiStack.of(entry.getKey()), axes, EmiStack.of(entry.getValue()), id));
 		}
-		for (Map.Entry<Block, Block> entry : Oxidizable.OXIDATION_LEVEL_DECREASES.get().entrySet()) {
+		for (Map.Entry<Block, Block> entry : WeatheringCopper.PREVIOUS_BY_BLOCK.get().entrySet()) {
 			Identifier id = synthetic("world/stripping", EmiUtil.subId(entry.getKey()));
 			addRecipeSafe(registry, () -> basicWorld(EmiStack.of(entry.getKey()), axes, EmiStack.of(entry.getValue()), id));
 		}
-		for (Map.Entry<Block, Block> entry : HoneycombItem.WAXED_TO_UNWAXED_BLOCKS.get().entrySet()) {
+		for (Map.Entry<Block, Block> entry : HoneycombItem.WAX_OFF_BY_BLOCK.get().entrySet()) {
 			Identifier id = synthetic("world/stripping", EmiUtil.subId(entry.getKey()));
 			addRecipeSafe(registry, () -> basicWorld(EmiStack.of(entry.getKey()), axes, EmiStack.of(entry.getValue()), id));
 		}
@@ -611,9 +512,9 @@ public class VanillaPlugin implements EmiPlugin {
 		EmiIngredient hoes = damagedTool(getPreferredTag(List.of(
 				"minecraft:hoes", "c:hoes", "c:tools/hoes", "fabric:hoes", "forge:tools/hoes"
 			), EmiStack.of(Items.IRON_HOE)), 1);
-		for (Map.Entry<Block, Pair<Predicate<ItemUsageContext>, Consumer<ItemUsageContext>>> entry
+		for (Map.Entry<Block, Pair<Predicate<UseOnContext>, Consumer<UseOnContext>>> entry
 				: HoeItemAccessor.getTillingActions().entrySet()) {
-			Consumer<ItemUsageContext> consumer = entry.getValue().getSecond();
+			Consumer<UseOnContext> consumer = entry.getValue().getSecond();
 			if (EmiClient.HOE_ACTIONS.containsKey(consumer)) {
 				Block b = entry.getKey();
 				Identifier id = synthetic("world/tilling", EmiUtil.subId(b));
@@ -644,7 +545,7 @@ public class VanillaPlugin implements EmiPlugin {
 		}
 
 		EmiIngredient honeycomb = EmiStack.of(Items.HONEYCOMB);
-		for (Map.Entry<Block, Block> entry : HoneycombItem.UNWAXED_TO_WAXED_BLOCKS.get().entrySet()) {
+		for (Map.Entry<Block, Block> entry : HoneycombItem.WAXABLES.get().entrySet()) {
 			Identifier id = synthetic("world/waxing", EmiUtil.subId(entry.getKey()));
 			addRecipeSafe(registry, () -> basicWorld(EmiStack.of(entry.getKey()), honeycomb, EmiStack.of(entry.getValue()), id, false));
 		}
@@ -659,8 +560,8 @@ public class VanillaPlugin implements EmiPlugin {
 			addRecipeSafe(registry, () -> EmiWorldInteractionRecipe.builder()
 				.id(synthetic("world/cauldron_washing", EmiUtil.subId(i)))
 				.leftInput(EmiStack.EMPTY, s -> new GeneratedSlotWidget(r -> {
-					ItemStack stack = i.getDefaultStack();
-					stack.set(DataComponentTypes.DYED_COLOR, new DyedColorComponent(r.nextInt(0xFFFFFF + 1), true));
+					ItemStack stack = i.getDefaultInstance();
+					stack.set(DataComponents.DYED_COLOR, new DyedItemColor(r.nextInt(0xFFFFFF + 1)));
 					return EmiStack.of(stack);
 				}, uniq, s.getBounds().x(), s.getBounds().y()))
 				.rightInput(cauldron, true)
@@ -709,16 +610,15 @@ public class VanillaPlugin implements EmiPlugin {
 			.id(synthetic("world/fluid_interaction", "minecraft/basalt"))
 			.leftInput(lavaCatalyst)
 			.rightInput(soulSoil, false, s -> s.appendTooltip(EmiPort
-				.translatable("tooltip.emi.fluid_interaction.basalt.soul_soil", Formatting.GREEN)))
+				.translatable("tooltip.emi.fluid_interaction.basalt.soul_soil", ChatFormatting.GREEN)))
 			.rightInput(blueIce, false, s -> s.appendTooltip(EmiPort
-				.translatable("tooltip.emi.fluid_interaction.basalt.blue_ice", Formatting.GREEN)))
+				.translatable("tooltip.emi.fluid_interaction.basalt.blue_ice", ChatFormatting.GREEN)))
 			.output(EmiStack.of(Items.BASALT))
 			.build());
 
-		EmiPort.getFluidRegistry().streamEntries().forEach(entry -> {
-			Fluid fluid = entry.value();
-			Item bucket = fluid.getBucketItem();
-			if (fluid.isStill(fluid.getDefaultState()) && !fluid.getDefaultState().getBlockState().isAir() && bucket != Items.AIR && fluid instanceof FlowableFluid) {
+		EmiPort.getFluidRegistry().stream().forEach(fluid -> {
+			Item bucket = fluid.getBucket();
+			if (fluid.isSource(fluid.defaultFluidState()) && !fluid.defaultFluidState().createLegacyBlock().isAir() && bucket != Items.AIR && fluid instanceof FlowingFluid) {
 				addRecipeSafe(registry, () -> basicWorld(EmiStack.of(Items.BUCKET), EmiStack.of(fluid, FluidUnit.BUCKET), EmiStack.of(bucket),
 					synthetic("emi", "bucket_filling/" + EmiUtil.subId(fluid)), false));
 			}
@@ -737,7 +637,7 @@ public class VanillaPlugin implements EmiPlugin {
 	private static EmiIngredient damagedTool(EmiIngredient tool, int damage) {
 		for (EmiStack stack : tool.getEmiStacks()) {
 			ItemStack is = stack.getItemStack().copy();
-			is.setDamage(1);
+			is.setDamageValue(1);
 			stack.setRemainder(EmiStack.of(is));
 		}
 		return tool;
@@ -745,7 +645,7 @@ public class VanillaPlugin implements EmiPlugin {
 
 	private static EmiIngredient getPreferredTag(List<String> candidates, EmiIngredient fallback) {
 		for (String id : candidates) {
-			EmiIngredient potential = EmiIngredient.of(TagKey.of(EmiPort.getItemRegistry().getKey(), EmiPort.id(id)));
+			EmiIngredient potential = EmiIngredient.of(TagKey.create(EmiPort.getItemRegistry().key(), EmiPort.id(id)));
 			if (!potential.isEmpty()) {
 				return potential;
 			}
@@ -771,17 +671,17 @@ public class VanillaPlugin implements EmiPlugin {
 	}
 
 	private static void addComposting(EmiRegistry registry, Set<Item> hiddenItems) {
-		compressRecipesToTags(ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.keySet().stream()
-			.map(ItemConvertible::asItem).collect(Collectors.toSet()), (a, b) -> {
-				return Float.compare(ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.getFloat(a), ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.getFloat(b));
+		compressRecipesToTags(ComposterBlock.COMPOSTABLES.keySet().stream()
+			.map(ItemLike::asItem).collect(Collectors.toSet()), (a, b) -> {
+				return Float.compare(ComposterBlock.COMPOSTABLES.getFloat(a), ComposterBlock.COMPOSTABLES.getFloat(b));
 			}, tag -> {
 				EmiIngredient stack = EmiIngredient.of(tag.raw());
 				Item item = stack.getEmiStacks().get(0).getItemStack().getItem();
-				float chance = ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.getFloat(item);
+				float chance = ComposterBlock.COMPOSTABLES.getFloat(item);
 				registry.addRecipe(new EmiCompostingRecipe(stack, chance, synthetic("composting/tag", EmiUtil.subId(tag.id()))));
 			}, item -> {
 				if (!hiddenItems.contains(item)) {
-					float chance = ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.getFloat(item);
+					float chance = ComposterBlock.COMPOSTABLES.getFloat(item);
 					registry.addRecipe(new EmiCompostingRecipe(EmiStack.of(item), chance, synthetic("composting/item", EmiUtil.subId(item))));
 				}
 			});
@@ -824,7 +724,9 @@ public class VanillaPlugin implements EmiPlugin {
 	}
 
 	private static <C extends RecipeInput, T extends Recipe<C>> Iterable<T> getRecipes(EmiRegistry registry, RecipeType<T> type) {
-		return registry.getRecipeManager().listAllOfType(type).stream().map(e -> e.value())::iterator;
+		return registry.getRecipeManager().getRecipes().stream()
+			.filter(h -> h.value().getType() == type)
+			.map(h -> (T) h.value())::iterator;
 	}
 
 	private static void safely(String name, Runnable runnable) {

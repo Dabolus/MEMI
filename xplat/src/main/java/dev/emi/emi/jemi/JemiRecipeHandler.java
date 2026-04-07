@@ -28,16 +28,19 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.transfer.IRecipeTransferError;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandler;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeEntry;
-import net.minecraft.recipe.RecipeManager;
-import net.minecraft.screen.ScreenHandler;
+import mezz.jei.api.recipe.types.IRecipeType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.crafting.Recipe;
 
-public class JemiRecipeHandler<T extends ScreenHandler, R> implements EmiRecipeHandler<T> {
-	private final RecipeType<R> type;
+public class JemiRecipeHandler<T extends AbstractContainerMenu, R> implements EmiRecipeHandler<T> {
+	private final IRecipeType<R> type;
 	//private IRecipeCategory<R> category;
 	public IRecipeTransferHandler<T, R> handler;
 
@@ -59,7 +62,7 @@ public class JemiRecipeHandler<T extends ScreenHandler, R> implements EmiRecipeH
 	}
 
 	@Override
-	public EmiPlayerInventory getInventory(HandledScreen<T> screen) {
+	public EmiPlayerInventory getInventory(AbstractContainerScreen<T> screen) {
 		return new EmiPlayerInventory(List.of());
 	}
 
@@ -78,13 +81,13 @@ public class JemiRecipeHandler<T extends ScreenHandler, R> implements EmiRecipeH
 	public boolean craft(EmiRecipe recipe, EmiCraftContext<T> context) {
 		IRecipeTransferError err = jeiCraft(recipe, context, true, null);
 		if (err == null || err.getType().allowsTransfer) {
-			MinecraftClient.getInstance().setScreen(context.getScreen());
+			Minecraft.getInstance().setScreen(context.getScreen());
 		}
 		return err == null || err.getType().allowsTransfer;
 	}
 
 	@Override
-	public void render(EmiRecipe recipe, EmiCraftContext<T> context, List<Widget> widgets, DrawContext raw) {
+	public void render(EmiRecipe recipe, EmiCraftContext<T> context, List<Widget> widgets, GuiGraphicsExtractor raw) {
 		EmiDrawContext draw = EmiDrawContext.wrap(raw);
 		R rawRecipe = getRawRecipe(recipe);
 		JemiRecipeSlotsView view = createSlotsView(recipe, rawRecipe, widgets);
@@ -105,8 +108,8 @@ public class JemiRecipeHandler<T extends ScreenHandler, R> implements EmiRecipeH
 					}
 				});
 				draw.push();
-				draw.matrices().translate(-100000, -100000, -100000);
-				draw.matrices().scale(0, 0, 0);
+				draw.matrices().translate(-100000, -100000);
+				draw.matrices().scale(0, 0);
 				err.showError(raw, EmiScreenManager.lastMouseX, EmiScreenManager.lastMouseY, view, 0, 0);
 				draw.pop();
 				view.getSlotViews().forEach(v -> {
@@ -121,7 +124,7 @@ public class JemiRecipeHandler<T extends ScreenHandler, R> implements EmiRecipeH
 	@SuppressWarnings("unchecked")
 	private IRecipeTransferError jeiCraft(EmiRecipe recipe, EmiCraftContext<T> context, boolean craft, JemiRecipeSlotsView view) {
 		try {
-			MinecraftClient client = MinecraftClient.getInstance();
+			Minecraft client = Minecraft.getInstance();
 			R rawRecipe = getRawRecipe(recipe);
 			
 			if (view == null) {
@@ -196,7 +199,7 @@ public class JemiRecipeHandler<T extends ScreenHandler, R> implements EmiRecipeH
 					addIngredients(builder, slotWidgets, List.of(EmiStack.EMPTY), RecipeIngredientRole.INPUT);
 				}
 			}
-			addIngredients(builder, slotWidgets, recipe.getCatalysts(), RecipeIngredientRole.CATALYST);
+			addIngredients(builder, slotWidgets, recipe.getCatalysts(), RecipeIngredientRole.RENDER_ONLY);
 		}
 
 		return new JemiRecipeSlotsView(builder.slots.stream().map(JemiRecipeSlot::new).toList());
@@ -205,28 +208,31 @@ public class JemiRecipeHandler<T extends ScreenHandler, R> implements EmiRecipeH
 	@SuppressWarnings("unchecked")
 	private R getRawRecipe(EmiRecipe recipe) {
 		try {
-			MinecraftClient client = MinecraftClient.getInstance();
-			RecipeManager manager = client.world.getRecipeManager();
-			if (type != null && type.getRecipeClass() != null) {
-				if (recipe instanceof JemiRecipe jr && jr.recipe != null) {
-					if (type.getRecipeClass().isAssignableFrom(jr.recipe.getClass())) {
-						return type.getRecipeClass().cast(jr.recipe);
+			Minecraft client = Minecraft.getInstance();
+			if (client.level != null && client.level.recipeAccess() instanceof RecipeManager manager) {
+				if (type != null && type.getRecipeClass() != null) {
+					if (recipe instanceof JemiRecipe jr && jr.recipe != null) {
+						if (type.getRecipeClass().isAssignableFrom(jr.recipe.getClass())) {
+							return type.getRecipeClass().cast(jr.recipe);
+						}
 					}
-				}
-				if (manager != null) {
-					Optional<? extends RecipeEntry<?>> opt = manager.get(recipe.getId());
-					if (opt.isPresent()) {
-						RecipeEntry<?> r = opt.get();
-						if (type.getRecipeClass().isAssignableFrom(r.getClass())) {
-							return type.getRecipeClass().cast(r);
+					if (recipe.getId() != null) {
+						ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, recipe.getId());
+						Optional<? extends RecipeHolder<?>> opt = manager.byKey(key);
+						if (opt.isPresent()) {
+							RecipeHolder<?> r = opt.get();
+							if (type.getRecipeClass().isAssignableFrom(r.getClass())) {
+								return type.getRecipeClass().cast(r);
+							}
 						}
 					}
 				}
-			}
-			if (manager != null) {
-				Optional<? extends RecipeEntry<?>> opt = manager.get(recipe.getId());
-				if (opt.isPresent()) {
-					return (R) opt.get();
+				if (recipe.getId() != null) {
+					ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, recipe.getId());
+					Optional<? extends RecipeHolder<?>> opt = manager.byKey(key);
+					if (opt.isPresent()) {
+						return (R) opt.get();
+					}
 				}
 			}
 		} catch (Exception e) {

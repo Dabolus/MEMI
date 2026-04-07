@@ -1,7 +1,15 @@
 package dev.emi.emi.handler;
 
 import java.util.List;
-
+import java.util.Optional;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.StonecutterMenu;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.SelectableRecipe;
+import net.minecraft.world.item.crafting.StonecutterRecipe;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Lists;
@@ -11,22 +19,11 @@ import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.recipe.handler.EmiCraftContext;
 import dev.emi.emi.api.recipe.handler.StandardRecipeHandler;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.recipe.RecipeEntry;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.StonecuttingRecipe;
-import net.minecraft.recipe.input.SingleStackRecipeInput;
-import net.minecraft.screen.StonecutterScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.world.World;
 
-public class StonecuttingRecipeHandler implements StandardRecipeHandler<StonecutterScreenHandler> {
+public class StonecuttingRecipeHandler implements StandardRecipeHandler<StonecutterMenu> {
 
 	@Override
-	public List<Slot> getInputSources(StonecutterScreenHandler handler) {
+	public List<Slot> getInputSources(StonecutterMenu handler) {
 		List<Slot> list = Lists.newArrayList();
 		list.add(handler.getSlot(0));
 		int invStart = 2;
@@ -37,7 +34,7 @@ public class StonecuttingRecipeHandler implements StandardRecipeHandler<Stonecut
 	}
 
 	@Override
-	public List<Slot> getCraftingSlots(StonecutterScreenHandler handler) {
+	public List<Slot> getCraftingSlots(StonecutterMenu handler) {
 		return List.of(handler.slots.get(0));
 	}
 
@@ -47,27 +44,29 @@ public class StonecuttingRecipeHandler implements StandardRecipeHandler<Stonecut
 	}
 
 	@Override
-	public @Nullable Slot getOutputSlot(StonecutterScreenHandler handler) {
+	public @Nullable Slot getOutputSlot(StonecutterMenu handler) {
 		return handler.getSlot(1);
 	}
 
 	@Override
-	public boolean craft(EmiRecipe recipe, EmiCraftContext<StonecutterScreenHandler> context) {
+	public boolean craft(EmiRecipe recipe, EmiCraftContext<StonecutterMenu> context) {
 		boolean action = StandardRecipeHandler.super.craft(recipe, context);
-		MinecraftClient client = MinecraftClient.getInstance();
-		World world = client.world;
-		SingleStackRecipeInput inv = new SingleStackRecipeInput(recipe.getInputs().get(0).getEmiStacks().get(0).getItemStack());
-		List<StonecuttingRecipe> recipes = world.getRecipeManager().getAllMatches(RecipeType.STONECUTTING, inv, world).stream().map(RecipeEntry::value).toList();
-		for (int i = 0; i < recipes.size(); i++) {
-			if (EmiPort.getId(recipes.get(i)) != null && EmiPort.getId(recipes.get(i)).equals(recipe.getId())) {
-				StonecutterScreenHandler sh = context.getScreenHandler();
-				client.interactionManager.clickButton(sh.syncId, i);
-				if (context.getDestination() == EmiCraftContext.Destination.CURSOR) {
-					client.interactionManager.clickSlot(sh.syncId, 1, 0, SlotActionType.PICKUP, client.player);
-				} else if (context.getDestination() == EmiCraftContext.Destination.INVENTORY) {
-					client.interactionManager.clickSlot(sh.syncId, 1, 0, SlotActionType.QUICK_MOVE, client.player);
+		Minecraft client = Minecraft.getInstance();
+		StonecutterMenu sh = context.getScreenHandler();
+		List<SelectableRecipe.SingleInputEntry<StonecutterRecipe>> entries = sh.getVisibleRecipes().entries();
+		for (int i = 0; i < entries.size(); i++) {
+			Optional<RecipeHolder<StonecutterRecipe>> optHolder = entries.get(i).recipe().recipe();
+			if (optHolder.isPresent()) {
+				StonecutterRecipe rec = optHolder.get().value();
+				if (EmiPort.getId(rec) != null && EmiPort.getId(rec).equals(recipe.getId())) {
+					client.gameMode.handleInventoryButtonClick(sh.containerId, i);
+					if (context.getDestination() == EmiCraftContext.Destination.CURSOR) {
+						client.gameMode.handleContainerInput(sh.containerId, 1, 0, ContainerInput.PICKUP, client.player);
+					} else if (context.getDestination() == EmiCraftContext.Destination.INVENTORY) {
+						client.gameMode.handleContainerInput(sh.containerId, 1, 0, ContainerInput.QUICK_MOVE, client.player);
+					}
+					break;
 				}
-				break;
 			}
 		}
 		return action;

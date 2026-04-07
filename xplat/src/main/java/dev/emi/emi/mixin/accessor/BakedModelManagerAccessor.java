@@ -1,17 +1,9 @@
 package dev.emi.emi.mixin.accessor;
 
-import java.util.Map;
-
+import net.minecraft.client.resources.model.ModelManager;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
 
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedModelManager;
-import net.minecraft.client.util.ModelIdentifier;
-
-@Mixin(BakedModelManager.class)
+// BakedModel removed in MC 26.1 - ModelManager no longer has a models map
+@Mixin(ModelManager.class)
 public interface BakedModelManagerAccessor {
-	
-	@Accessor("models")
-    Map<ModelIdentifier, BakedModel> getModels();
 }

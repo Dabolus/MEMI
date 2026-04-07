@@ -1,6 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import net.fabricmc.loom.task.RemapJarTask
-import net.fabricmc.loom.task.RemapSourcesJarTask
 
 buildscript {
 	repositories {
@@ -14,8 +12,8 @@ buildscript {
 }
 
 plugins {
-	id "dev.architectury.loom"
-	id "com.github.johnrengelman.shadow" version "7.1.2"
+	id "net.neoforged.moddev" version "2.0.141"
+	id "com.gradleup.shadow" version "8.3.6"
 }
 if (System.getenv("MODRINTH_TOKEN")) {
 	apply plugin: "com.modrinth.minotaur"
@@ -25,17 +23,12 @@ if (System.getenv("CURSEFORGE_TOKEN")) {
 }
 evaluationDependsOn ':xplat'
 
-architectury {
-	platformSetupLoomIde()
-	neoForge()
-}
-
-loom {
-	accessWidenerPath = project(":xplat").loom.accessWidenerPath
+neoForge {
+	version = rootProject.neoforge_version
 
 	mods {
-		main {
-			sourceSet project(':xplat').sourceSets.main
+		emi {
+			sourceSet sourceSets.main
 		}
 	}
 }
@@ -55,20 +48,11 @@ configurations {
 	shadowCommon
 	compileClasspath.extendsFrom common
 	runtimeClasspath.extendsFrom common
-	developmentNeoForge.extendsFrom common
 }
 
 dependencies {
-	minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-	mappings loom.layered {
-		it.mappings("net.fabricmc:yarn:${project.yarn_mappings}:v2")
-		it.mappings("dev.architectury:yarn-mappings-patch-neoforge:${project.neoforge_yarn_patch}")
-	}
-
-	neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
-
-	common(project(path: ":xplat", configuration: "namedElements")) { transitive = false }
-	shadowCommon(project(path: ":xplat", configuration: "transformProductionNeoForge")) { transitive = false }
+	common(project(path: ":xplat")) { transitive = false }
+	shadowCommon(project(path: ":xplat")) { transitive = false }
 }
 
 processResources {
@@ -89,35 +73,36 @@ shadowJar.configure { ShadowJar jar ->
 	jar.archiveClassifier = "dev-shadow"
 }
 
-def remapJar = tasks.named('remapJar', RemapJarTask)
+def jar = tasks.named('jar', Jar)
 
-remapJar.configure { RemapJarTask jar ->
+jar.configure { Jar j ->
 	dependsOn shadowJar
-	jar.inputFile.convention(shadowJar.flatMap {it.archiveFile })
+	from zipTree(shadowJar.flatMap { it.archiveFile })
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 def sourcesJar = tasks.named('sourcesJar', Jar)
 
-sourcesJar.configure { Jar jar ->
+sourcesJar.configure { Jar j ->
 	def commonSources = project(":xplat").tasks.named("sourcesJar", Jar)
 	dependsOn commonSources
-	jar.from zipTree(commonSources.flatMap { it.archiveFile })
+	j.from zipTree(commonSources.flatMap { it.archiveFile })
 	//TODO: Fix this in a better way that doesn't lead to stripping out the jemi sources
-	jar.exclude 'dev/emi/emi/jemi/**'
+	j.exclude 'dev/emi/emi/jemi/**'
 }
 
 def filteredSourcesJar = tasks.register('filteredSourcesJar', Jar, {
 	archiveClassifier = 'filtered-sources'
-	def remapSourcesJar = tasks.named('remapSourcesJar', RemapSourcesJarTask)
-	dependsOn remapSourcesJar
-	from zipTree(remapSourcesJar.flatMap { it.archiveFile })
+	def sourcesJarTask = tasks.named('sourcesJar', Jar)
+	dependsOn sourcesJarTask
+	from zipTree(sourcesJarTask.flatMap { it.archiveFile })
 	exclude 'dev/emi/emi/jemi/**'
 })
 
 def apiJar = tasks.register('apiJar', Jar, {
 	archiveClassifier = 'api'
-	dependsOn remapJar
-	from zipTree(remapJar.flatMap { it.archiveFile })
+	dependsOn jar
+	from zipTree(jar.flatMap { it.archiveFile })
 	include 'emi.mixins.json'
 	include 'emi-neoforge.mixins.json'
 	include 'emi.accesswidener'
@@ -145,8 +130,8 @@ publishing {
 		register('maven', MavenPublication) {
 			artifactId = "${rootProject.name}-${project.name}"
 			version = project.ext.mavenVersion
-			artifact(remapJar) {
-				builtBy remapJar
+			artifact(jar) {
+				builtBy jar
 				classifier ''
 			}
 			artifact(filteredSourcesJar) {
@@ -181,7 +166,7 @@ if (System.getenv("MODRINTH_TOKEN")) {
 		versionNumber = project.version
 		versionName = project.version
 		versionType = 'release'
-		uploadFile = remapJar
+		uploadFile = jar
 		gameVersions = [rootProject.minecraft_version]
 		loaders = ['neoforge']
 		detectLoaders = false
@@ -201,7 +186,7 @@ if (System.getenv("CURSEFORGE_TOKEN")) {
 			addGameVersion rootProject.minecraft_version
 			addGameVersion 'NeoForge'
 
-			mainArtifact(remapJar.get().archiveFile) {
+			mainArtifact(jar.get().archiveFile) {
 				displayName = 'emi-' + project.version
 			}
 		}

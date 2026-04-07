@@ -14,20 +14,23 @@ import dev.emi.emi.jemi.impl.JemiRecipeSlot.TankInfo;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotRichTooltipCallback;
-import mezz.jei.api.gui.ingredient.IRecipeSlotTooltipCallback;
 import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import net.minecraft.component.ComponentChanges;
-import net.minecraft.fluid.Fluid;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.material.Fluid;
 
 public class JemiRecipeSlotBuilder implements IRecipeSlotBuilder {
 	public final JemiIngredientAcceptor acceptor;
 	public boolean large = false;
 	public int x, y;
 	public Optional<String> name = Optional.empty();
-	public IRecipeSlotTooltipCallback tooltipCallback;
 	public IRecipeSlotRichTooltipCallback richTooltipCallback;
 	public OffsetDrawable background, overlay;
 	public Map<IIngredientType<?>, IngredientRenderer<?>> renderers; 
@@ -37,6 +40,78 @@ public class JemiRecipeSlotBuilder implements IRecipeSlotBuilder {
 		this.acceptor = new JemiIngredientAcceptor(role);
 		this.x = x;
 		this.y = y;
+	}
+
+	@Override
+	public IRecipeSlotBuilder add(SlotDisplay display) {
+		acceptor.add(display);
+		return this;
+	}
+
+	@Override
+	public <I> IRecipeSlotBuilder add(IIngredientType<I> ingredientType, SlotDisplay display) {
+		acceptor.add(ingredientType, display);
+		return this;
+	}
+
+	@Override
+	public IRecipeSlotBuilder add(ItemStack stack) {
+		acceptor.add(stack);
+		return this;
+	}
+
+	@Override
+	public IRecipeSlotBuilder add(ItemLike item) {
+		acceptor.add(item);
+		return this;
+	}
+
+	@Override
+	public IRecipeSlotBuilder add(ItemStackTemplate template) {
+		acceptor.add(template);
+		return this;
+	}
+
+	@Override
+	public IRecipeSlotBuilder add(Fluid fluid) {
+		acceptor.add(fluid);
+		return this;
+	}
+
+	@Override
+	public IRecipeSlotBuilder add(Fluid fluid, long amount) {
+		acceptor.add(fluid, amount);
+		return this;
+	}
+
+	@Override
+	public IRecipeSlotBuilder add(Fluid fluid, long amount, DataComponentPatch componentChanges) {
+		acceptor.add(fluid, amount, componentChanges);
+		return this;
+	}
+
+	@Override
+	public IRecipeSlotBuilder add(Ingredient ingredient) {
+		acceptor.add(ingredient);
+		return this;
+	}
+
+	@Override
+	public <I> IRecipeSlotBuilder add(IIngredientType<I> ingredientType, Ingredient ingredient) {
+		acceptor.add(ingredientType, ingredient);
+		return this;
+	}
+
+	@Override
+	public <I> IRecipeSlotBuilder add(ITypedIngredient<I> typedIngredient) {
+		acceptor.add(typedIngredient);
+		return this;
+	}
+
+	@Override
+	public <I> IRecipeSlotBuilder add(IIngredientType<I> ingredientType, I ingredient) {
+		acceptor.add(ingredientType, ingredient);
+		return this;
 	}
 
 	@Override
@@ -64,14 +139,8 @@ public class JemiRecipeSlotBuilder implements IRecipeSlotBuilder {
 	}
 
 	@Override
-	public IRecipeSlotBuilder addFluidStack(Fluid fluid, long amount, ComponentChanges componentChanges) {
+	public IRecipeSlotBuilder addFluidStack(Fluid fluid, long amount, DataComponentPatch componentChanges) {
 		acceptor.addFluidStack(fluid, amount, componentChanges);
-		return this;
-	}
-
-	@Override
-	public IRecipeSlotBuilder addTooltipCallback(IRecipeSlotTooltipCallback tooltipCallback) {
-		this.tooltipCallback = tooltipCallback;
 		return this;
 	}
 
@@ -148,6 +217,12 @@ public class JemiRecipeSlotBuilder implements IRecipeSlotBuilder {
 	@Override
 	public int getHeight() {
 		return large ? 26 : 18;
+	}
+
+	@Override
+	public IRecipeSlotBuilder addItemStacks(List<ItemStack> itemStacks) {
+		acceptor.addItemStacks(itemStacks);
+		return this;
 	}
 
 	@Override

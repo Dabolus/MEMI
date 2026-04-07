@@ -1,6 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import net.fabricmc.loom.task.RemapJarTask
-import net.fabricmc.loom.task.RemapSourcesJarTask
 
 buildscript {
 	repositories {
@@ -14,8 +12,8 @@ buildscript {
 }
 
 plugins {
-	id "dev.architectury.loom"
-	id "com.github.johnrengelman.shadow" version "7.1.2"
+	id "net.fabricmc.fabric-loom"
+	id "com.gradleup.shadow" version "8.3.6"
 }
 if (System.getenv("MODRINTH_TOKEN")) {
 	apply plugin: "com.modrinth.minotaur"
@@ -24,11 +22,6 @@ if (System.getenv("CURSEFORGE_TOKEN")) {
 	apply plugin: "com.matthewprenger.cursegradle"
 }
 evaluationDependsOn ':xplat'
-
-architectury {
-	platformSetupLoomIde()
-	fabric()
-}
 
 loom {
 	accessWidenerPath = project(":xplat").loom.accessWidenerPath
@@ -53,27 +46,26 @@ repositories {
 	maven {
 		url = "https://maven.terraformersmc.com/"
 	}
+	maven {
+		url = "https://maven.blamejared.com"
+	}
 }
 
 dependencies {
 	minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-	mappings "net.fabricmc:yarn:${rootProject.yarn_mappings}:v2"
 
-	modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-	modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+	implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
 
-	common(project(path: ":xplat", configuration: "namedElements")) { transitive false }
-	shadowCommon(project(path: ":xplat", configuration: "transformProductionFabric")) { transitive false }
+	common(project(path: ":xplat")) { transitive false }
+	shadowCommon(project(path: ":xplat")) { transitive false }
 
-	modCompileOnly("mezz.jei:${rootProject.jei_version}") {
-		transitive = false
-	}
-	modCompileOnly "com.terraformersmc:modmenu:6.1.0-rc.4"
+	compileOnly "mezz.jei:jei-${rootProject.minecraft_version}-fabric:29.3.0.22"
+
+	compileOnly "com.terraformersmc:modmenu:18.0.0-alpha.8"
 }
 
 processResources {
-	inputs.property "version", project.version
-
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
 	}
@@ -88,32 +80,32 @@ shadowJar.configure { ShadowJar jar ->
 	jar.archiveClassifier = "dev-shadow"
 }
 
-def remapJar = tasks.named('remapJar', RemapJarTask)
+def jar = tasks.named('jar', Jar)
 
-remapJar.configure { RemapJarTask jar ->
+jar.configure { Jar j ->
 	dependsOn shadowJar
-	jar.inputFile.convention(shadowJar.flatMap {it.archiveFile })
-	jar.injectAccessWidener = true
+	from zipTree(shadowJar.flatMap { it.archiveFile })
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-tasks.named('sourcesJar', Jar).configure { Jar jar ->
+tasks.named('sourcesJar', Jar).configure { Jar j ->
 	def commonSources = project(":xplat").tasks.named("sourcesJar", Jar)
 	dependsOn commonSources
-	jar.from zipTree(commonSources.flatMap { it.archiveFile })
+	j.from zipTree(commonSources.flatMap { it.archiveFile })
 }
 
 def filteredSourcesJar = tasks.register('filteredSourcesJar', Jar, {
 	archiveClassifier = 'filtered-sources'
-	def remapSourcesJar = tasks.named('remapSourcesJar', RemapSourcesJarTask)
-	dependsOn remapSourcesJar
-	from zipTree(remapSourcesJar.flatMap { it.archiveFile })
+	def sourcesJar = tasks.named('sourcesJar', Jar)
+	dependsOn sourcesJar
+	from zipTree(sourcesJar.flatMap { it.archiveFile })
 	exclude 'dev/emi/emi/jemi/**'
 })
 
 def apiJar = tasks.register('apiJar', Jar, {
 	archiveClassifier = 'api'
-	dependsOn remapJar
-	from zipTree(remapJar.flatMap { it.archiveFile })
+	dependsOn jar
+	from zipTree(jar.flatMap { it.archiveFile })
 	include 'fabric.mod.json'
 	include 'emi.mixins.json'
 	include 'emi-fabric.mixins.json'
@@ -142,8 +134,8 @@ publishing {
 		register('maven', MavenPublication) {
 			artifactId = "${rootProject.name}-${project.name}"
 			version = project.ext.mavenVersion
-			artifact(remapJar) {
-				builtBy remapJar
+			artifact(jar) {
+				builtBy jar
 				classifier ''
 			}
 			artifact(filteredSourcesJar) {
@@ -178,7 +170,7 @@ if (System.getenv("MODRINTH_TOKEN")) {
 		versionNumber = project.version
 		versionName = project.version
 		versionType = 'release'
-		uploadFile = remapJar
+		uploadFile = jar
 		gameVersions = [rootProject.minecraft_version]
 		loaders = ['fabric', 'quilt']
 		detectLoaders = false
@@ -199,7 +191,7 @@ if (System.getenv("CURSEFORGE_TOKEN")) {
 			addGameVersion 'Fabric'
 			addGameVersion 'Quilt'
 
-			mainArtifact(remapJar.get().archiveFile) {
+			mainArtifact(jar.get().archiveFile) {
 				displayName = 'emi-' + project.version
 			}
 		}

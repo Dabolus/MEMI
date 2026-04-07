@@ -2,7 +2,6 @@ package dev.emi.emi.platform.forge;
 
 import java.util.Arrays;
 
-import dev.emi.emi.EmiPort;
 import dev.emi.emi.data.EmiData;
 import dev.emi.emi.network.EmiNetwork;
 import dev.emi.emi.platform.EmiClient;
@@ -74,7 +73,6 @@ public class EmiClientForge {
 			MinecraftClient client = MinecraftClient.getInstance();
 			context.push();
 			context.matrices().translate(-screen.getGuiLeft(), -screen.getGuiTop(), 0.0);
-			EmiPort.setPositionTexShader();
 			EmiScreenManager.render(context, event.getMouseX(), event.getMouseY(), client.getTickDelta());
 			EmiScreenManager.drawForeground(context, event.getMouseX(), event.getMouseY(), client.getTickDelta());
 			context.pop();
@@ -91,7 +89,6 @@ public class EmiClientForge {
 		if (base != null) {
 			MinecraftClient client = MinecraftClient.getInstance();
 			context.push();
-			EmiPort.setPositionTexShader();
 			EmiScreenManager.drawForeground(context, event.getMouseX(), event.getMouseY(), client.getTickDelta());
 			context.pop();
 		}
