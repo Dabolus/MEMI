@@ -52,7 +52,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.material.Fluid;
-import org.joml.Matrix3x2fStack;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class EmiAgnosFabric extends EmiAgnos {
 	static {
@@ -213,7 +213,7 @@ public class EmiAgnosFabric extends EmiAgnos {
 	}
 
 	@Override
-	protected void renderFluidAgnos(FluidEmiStack stack, Matrix3x2fStack matrices, int x, int y, float delta, int xOff, int yOff, int width, int height) {
+	protected void renderFluidAgnos(FluidEmiStack stack, GuiGraphicsExtractor gfx, int x, int y, float delta, int xOff, int yOff, int width, int height) {
 		FluidVariant fluid = FluidVariant.of(stack.getKeyOfType(Fluid.class), stack.getComponentChanges());
 		FluidModel fluidModel = Minecraft.getInstance().getModelManager().getFluidStateModelSet().get(fluid.getFluid().defaultFluidState());
 		if (fluidModel == null || fluidModel.stillMaterial() == null) {
@@ -223,9 +223,16 @@ public class EmiAgnosFabric extends EmiAgnos {
 		if (sprite == null) {
 			return;
 		}
-		int color = FluidVariantRendering.getColor(fluid);
+		int color;
+		Minecraft mc = Minecraft.getInstance();
+		if (fluidModel.tintSource() != null && mc.level != null && mc.player != null) {
+			color = fluidModel.tintSource().colorInWorld(
+				fluid.getFluid().defaultFluidState().createLegacyBlock(), mc.level, mc.player.blockPosition());
+		} else {
+			color = FluidVariantRendering.getColor(fluid);
+		}
 		
-		EmiRenderHelper.drawTintedSprite(matrices, sprite, color, x, y, xOff, yOff, width, height);
+		EmiRenderHelper.drawTintedSprite(gfx, sprite, color, x, y, xOff, yOff, width, height);
 	}
 
 	@Override

@@ -16,16 +16,12 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.level.material.Fluid;
-import org.joml.Matrix4f;
 import org.joml.Vector2i;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import org.joml.Matrix3x2fStack;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat.Mode;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.handler.EmiCraftContext;
@@ -83,31 +79,22 @@ public class EmiRenderHelper {
 		context.drawTexture(texture, x + coriw, y + corih, cor,        cor,         u + corcen, v + corcen, cor, cor, 256, 256);
 	}
 
-	public static void drawTintedSprite(Matrix3x2fStack matrices, TextureAtlasSprite sprite, int color, int x, int y, int xOff, int yOff, int width, int height) {
-		if (sprite == null) {
+	public static void drawTintedSprite(GuiGraphicsExtractor gfx, TextureAtlasSprite sprite, int color, int x, int y, int xOff, int yOff, int width, int height) {
+		if (sprite == null || width == 0 || height == 0) {
 			return;
 		}
-		float r = ((color >> 16) & 255) / 256f;
-		float g = ((color >> 8) & 255) / 256f;
-		float b = (color & 255) / 256f;
-		
-		BufferBuilder bufferBuilder = Tesselator.getInstance().begin(Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-		float xMin = (float) x;
-		float yMin = (float) y;
-		float xMax = xMin + width;
-		float yMax = yMin + height;
-		float uSpan = sprite.getU1() - sprite.getU0();
-		float vSpan = sprite.getV1() - sprite.getV0();
-		float uMin = sprite.getU0() + uSpan / 16 * xOff;
-		float vMin = sprite.getV0() + vSpan / 16 * yOff;
-		float uMax = sprite.getU1() - uSpan / 16 * (16 - (width + xOff));
-		float vMax = sprite.getV1() - vSpan / 16 * (16 - (height + yOff));
-		Matrix4f model = new Matrix4f().mul(matrices);
-		bufferBuilder.addVertex(model, xMin, yMax, 1).setColor(r, g, b, 1).setUv(uMin, vMax);
-		bufferBuilder.addVertex(model, xMax, yMax, 1).setColor(r, g, b, 1).setUv(uMax, vMax);
-		bufferBuilder.addVertex(model, xMax, yMin, 1).setColor(r, g, b, 1).setUv(uMax, vMin);
-		bufferBuilder.addVertex(model, xMin, yMin, 1).setColor(r, g, b, 1).setUv(uMin, vMin);
-		EmiPort.draw(bufferBuilder);
+		int argb = color | 0xFF000000;
+		int spriteW = sprite.contents().width();
+		int spriteH = sprite.contents().height();
+		if (xOff == 0 && yOff == 0 && width >= spriteW && height >= spriteH) {
+			// Full sprite - render using blitSprite directly for proper atlas animation support
+			gfx.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, width, height, argb);
+		} else {
+			// Sub-region - use scissor clipping with full sprite render
+			gfx.enableScissor(x, y, x + width, y + height);
+			gfx.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x - xOff, y - yOff, spriteW, spriteH, argb);
+			gfx.disableScissor();
+		}
 	}
 
 	public static void drawScroll(EmiDrawContext context, int x, int y, int width, int height, int progress, int total, int color) {

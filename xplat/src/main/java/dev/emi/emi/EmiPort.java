@@ -42,8 +42,6 @@ import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
 import dev.emi.emi.api.stack.Comparison;
 import dev.emi.emi.registry.EmiRecipes;
 
@@ -122,11 +120,6 @@ public final class EmiPort {
 	public static List<BakedQuad> getQuads(Object model) {
 		// BakedModel removed in MC 26.1, model system completely rewritten
 		return List.of();
-	}
-
-	public static void draw(BufferBuilder bufferBuilder) {
-		MeshData meshData = bufferBuilder.buildOrThrow();
-		meshData.close();
 	}
 
 	public static int getGuiScale(Minecraft client) {

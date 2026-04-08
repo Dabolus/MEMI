@@ -11,7 +11,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.material.Fluid;
-import org.joml.Matrix3x2fStack;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.stack.FluidEmiStack;
@@ -119,15 +119,15 @@ public abstract class EmiAgnos {
 
 	protected abstract boolean isFloatyFluidAgnos(FluidEmiStack stack);
 
-	public static void renderFluid(FluidEmiStack stack, Matrix3x2fStack matrices, int x, int y, float delta) {
-		renderFluid(stack, matrices, x, y, delta, 0, 0, 16, 16);
+	public static void renderFluid(FluidEmiStack stack, GuiGraphicsExtractor gfx, int x, int y, float delta) {
+		renderFluid(stack, gfx, x, y, delta, 0, 0, 16, 16);
 	}
 
-	public static void renderFluid(FluidEmiStack stack, Matrix3x2fStack matrices, int x, int y, float delta, int xOff, int yOff, int width, int height) {
-		delegate.renderFluidAgnos(stack, matrices, x, y, delta, xOff, yOff, width, height);
+	public static void renderFluid(FluidEmiStack stack, GuiGraphicsExtractor gfx, int x, int y, float delta, int xOff, int yOff, int width, int height) {
+		delegate.renderFluidAgnos(stack, gfx, x, y, delta, xOff, yOff, width, height);
 	}
 
-	protected abstract void renderFluidAgnos(FluidEmiStack stack, Matrix3x2fStack matrices, int x, int y, float delta, int xOff, int yOff, int width, int height);
+	protected abstract void renderFluidAgnos(FluidEmiStack stack, GuiGraphicsExtractor gfx, int x, int y, float delta, int xOff, int yOff, int width, int height);
 
 	public static EmiStack createFluidStack(Object object) {
 		return delegate.createFluidStackAgnos(object);

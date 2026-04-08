@@ -74,7 +74,7 @@ public class FluidEmiStack extends EmiStack {
 		if ((flags & RENDER_ICON) != 0) {
 			context.push();
 			context.matrices().translate(0, 0);
-			EmiAgnos.renderFluid(this, context.matrices(), x, y, delta);
+			EmiAgnos.renderFluid(this, context.raw(), x, y, delta);
 			context.pop();
 		}
 		if ((flags & RENDER_REMAINDER) != 0) {

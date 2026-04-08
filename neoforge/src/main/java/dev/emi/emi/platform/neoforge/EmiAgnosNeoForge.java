@@ -56,7 +56,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforgespi.language.ModFileScanData;
-import org.joml.Matrix3x2fStack;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class EmiAgnosNeoForge extends EmiAgnos {
 	static {
@@ -275,7 +275,7 @@ public class EmiAgnosNeoForge extends EmiAgnos {
 	}
 
 	@Override
-	protected void renderFluidAgnos(FluidEmiStack stack, Matrix3x2fStack matrices, int x, int y, float delta, int xOff, int yOff, int width, int height) {
+	protected void renderFluidAgnos(FluidEmiStack stack, GuiGraphicsExtractor gfx, int x, int y, float delta, int xOff, int yOff, int width, int height) {
 		Fluid fluid = stack.getKeyOfType(Fluid.class);
 		FluidModel fluidModel = Minecraft.getInstance().getModelManager().getFluidStateModelSet().get(fluid.defaultFluidState());
 		if (fluidModel == null || fluidModel.stillMaterial() == null) {
@@ -285,8 +285,17 @@ public class EmiAgnosNeoForge extends EmiAgnos {
 		if (sprite == null) {
 			return;
 		}
-		int color = fluidModel.tintSource() != null ? fluidModel.tintSource().color(fluid.defaultFluidState().createLegacyBlock()) : 0xFFFFFFFF;
-		EmiRenderHelper.drawTintedSprite(matrices, sprite, color, x, y, xOff, yOff, width, height);
+		int color;
+		Minecraft mc = Minecraft.getInstance();
+		if (fluidModel.tintSource() != null && mc.level != null && mc.player != null) {
+			color = fluidModel.tintSource().colorInWorld(
+				fluid.defaultFluidState().createLegacyBlock(), mc.level, mc.player.blockPosition());
+		} else if (fluidModel.tintSource() != null) {
+			color = fluidModel.tintSource().color(fluid.defaultFluidState().createLegacyBlock());
+		} else {
+			color = 0xFFFFFFFF;
+		}
+		EmiRenderHelper.drawTintedSprite(gfx, sprite, color, x, y, xOff, yOff, width, height);
 	}
 
 	@Override
